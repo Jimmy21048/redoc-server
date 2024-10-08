@@ -23,6 +23,9 @@ app.use('/sign', authRouter);
 const accRouter = require('./routes/account');
 app.use('/account', accRouter);
 
+const socialsRouter = require('./routes/socials');
+app.use('/socials', socialsRouter);
+
 client.connect()
 .then(() => {
     console.log("Connection succesful");
