@@ -70,6 +70,7 @@ router.post('/newproject', validateToken, async (req, res) => {
 router.post('/newnote', validateToken, async (req, res) => {
     const user = req.user;
     const data = req.body;
+    console.log(data);
 
     if(data.attachProject.length > 0) {
         let note, project;
@@ -79,7 +80,8 @@ router.post('/newnote', validateToken, async (req, res) => {
                 users.updateOne({ username: user, "projects.projectName" : data.attachProject }, { $push : {
                     "projects.$.notes" : {
                         notesTitle : data.notesTitle,
-                        notesContent: ''
+                        notesContent: '',
+                        notesDate: data.notesDate
                     }
                 } }).then( async() => {
                     const info = await users.findOne({ username: user })
@@ -118,7 +120,8 @@ router.post('/newnote', validateToken, async (req, res) => {
                 users.updateOne({ username: user }, { $push : { randomNotes : {
                     notesTitle : data.notesTitle,
                     notesType : data.notesType,
-                    notesContent: ''
+                    notesContent: '',
+                    notesDate: data.notesDate
                 } } }).then(async() => {
                     const info = await users.findOne({ username : user })
                     //search for note

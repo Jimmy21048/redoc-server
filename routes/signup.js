@@ -3,6 +3,7 @@ const db = require('../config');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const { sign } = require('jsonwebtoken');
+const { validateToken } = require("../middleware/Auth");
 require('dotenv').config();
 
 const users = db.collection("users");
@@ -45,6 +46,12 @@ router.post('/login', async (req, res) => {
     const accessToken = sign({ username: currentUsers[0].username }, process.env.JWT_SIGN, {expiresIn : 1800});
     return res.json({success: "Logged in successfully", token: accessToken});
 
+})
+
+router.get('/auth', validateToken, (req, res) => {
+    if(req.user) {
+        return res.json({user: req.user});
+    }
 })
 
 module.exports = router;
