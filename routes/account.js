@@ -10,7 +10,17 @@ router.get('/myaccount', validateToken, async (req, res) => {
 
     await users.findOne({ username: user })
     .then(result => {
-        return res.json(result);
+        users.aggregate([
+            { $match : { "username" : { $exists : true } } },
+            { $project : { "username" : 1, "_id" : 0 } }
+        ]).toArray().then(peers => {
+            return res.json({result, peers});
+            // return res.json(result);
+        }).catch(err => {
+            console.log(err);
+            return res.json({err: "could not complete operation"});
+        })
+        
     }).catch(err => {
         console.log(err);
         return res.json({err: "could not complete operation"});
@@ -197,4 +207,222 @@ router.post('/updatenotes', validateToken, async (req, res) => {
     
 })
 
+router.get('/peers', validateToken, async (req, res) => {
+    users.aggregate([
+        { $match : { "username" : req.user } },
+        { $project : { "peers" : 1, "requestedPeers" : 1, "pendingPeers" : 1, "_id" : 0 } }
+    ]).toArray().then((result) => {
+        return res.json(result);
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+})
+
+router.post('/peerRequest', validateToken, async (req, res) => {
+    const data = req.body;
+    console.log(data, req.user)
+
+    await users.updateOne(
+        { "username" : data.user },
+        {
+            $addToSet : {
+                "pendingPeers" : req.user
+            }
+        }
+    ).then(() => {
+        users.updateOne(
+            { "username" : req.user },
+            {
+                $addToSet : {
+                    "requestedPeers" : data.user
+                }
+            }
+        ).then(() => {
+            users.updateOne(
+                { "username" : data.user },
+                {
+                    $addToSet : {
+                        "pendingPeers" : req.user
+                    }
+                }
+            ).then(() => {
+                return res.json({succes: "request sent"})
+            }).catch(err => {
+                console.log(err);
+                return res.json({projectError: "could not complete operation"})
+            })
+        }).catch(err => {
+            console.log(err);
+            return res.json({projectError: "could not complete operation"})
+        })
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+
+
+})
+
+router.post('/acceptPeer', validateToken, async (req, res) => {
+    const data = req.body
+    await users.updateOne(
+        { "username" : req.user },
+        {
+            $pull : {
+                pendingPeers : {
+                    $in : [data.peer]
+                }
+            }
+        }
+    ).then(() => {
+        users.updateOne(
+            { "username" : data.peer },
+            {
+                $pull : {
+                    requestedPeers : {
+                        $in : [req.user]
+                    }
+                }
+            }
+        ).then(() => {
+            users.updateOne(
+                { "username" : req.user },
+                {
+                    $addToSet : {
+                        peers : data.peer
+                    }
+                }
+            ).then(() => {
+                users.updateOne(
+                    { "username" : data.peer },
+                    {
+                        $addToSet : {
+                            peers : req.user
+                        }
+                    }
+                ).then(() => {
+                    return res.json({success: "peer added"})
+                }).catch(err => {
+                    console.log(err);
+                    return res.json({projectError: "could not complete operation"})
+                })
+            }).catch(err => {
+                console.log(err);
+                return res.json({projectError: "could not complete operation"})
+            })        
+        }).catch(err => {
+            console.log(err);
+            return res.json({projectError: "could not complete operation"})
+        })    
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+
+})
+
+router.post('/rejectPeer', validateToken, async (req, res) => {
+    const data = req.body
+    await users.updateOne(
+        { "username" : req.user },
+        {
+            $pull : {
+                pendingPeers : {
+                    $in : [data.peer]
+                }
+            }
+        }
+    ).then(() => {
+        users.updateOne(
+            { "username" : data.peer },
+            {
+                $pull : {
+                    requestedPeers : {
+                        $in : [req.user]
+                    }
+                }
+            }
+        ).then(() => {
+            return res.json({success: "peer request rejected"})
+        }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+})
+
+router.post('/cancelPeer', validateToken, async (req, res) => {
+    const data = req.body
+    await users.updateOne(
+        { "username" : req.user },
+        {
+            $pull : {
+                requestedPeers : {
+                    $in : [data.peer]
+                }
+            }
+        }
+    ).then(() => {
+        users.updateOne(
+            { "username" : data.peer },
+            {
+                $pull : {
+                    pendingPeers : {
+                        $in : [req.user]
+                    }
+                }
+            }
+        ).then(() => {
+            return res.json({success: "peer request cancelled"})
+        }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+})
+
+router.post('/projectType', validateToken, async (req, res) => {
+    const data = req.body
+    await users.updateOne(
+        { "username" : req.user, "projects.projectName" : data.name }, {
+            $set : {
+                "projects.$[project].projectType" : data.type
+            }
+        }, {
+            arrayFilters : [ { "project.projectName" : data.name } ]
+        }
+    ).then(() => {
+        return res.json({success : "project type change successful"})
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+})
+
+router.post('/deleteProject', validateToken, async (req, res) => {
+    const data = req.body
+    await users.updateOne(
+        { "username" : req.user },
+        {
+            $pull : {
+                projects : { "projectName" : data.name }
+            }
+        },
+        {
+            multi : true
+        }
+    ).then(() => {
+        return res.json({success : "project deleted success"})
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+})
 module.exports = router;
