@@ -163,7 +163,7 @@ router.post('/newnote', validateToken, async (req, res) => {
 router.post('/updatenotes', validateToken, async (req, res) => {
     const user = req.user
     const data = req.body
-    console.log(data);
+
     if(data.project.length > 0) {
         await users.updateOne({
             username: user,
@@ -210,7 +210,7 @@ router.post('/updatenotes', validateToken, async (req, res) => {
 router.get('/peers', validateToken, async (req, res) => {
     users.aggregate([
         { $match : { "username" : req.user } },
-        { $project : { "peers" : 1, "requestedPeers" : 1, "pendingPeers" : 1, "_id" : 0 } }
+        { $project : { "peers" : 1, "requestedPeers" : 1, "pendingPeers" : 1, "_id" : 0, "incomingReviews" : 1, "outgoingReviews" : 1 } }
     ]).toArray().then((result) => {
         return res.json(result);
     }).catch(err => {
@@ -221,7 +221,6 @@ router.get('/peers', validateToken, async (req, res) => {
 
 router.post('/peerRequest', validateToken, async (req, res) => {
     const data = req.body;
-    console.log(data, req.user)
 
     await users.updateOne(
         { "username" : data.user },
@@ -420,6 +419,46 @@ router.post('/deleteProject', validateToken, async (req, res) => {
         }
     ).then(() => {
         return res.json({success : "project deleted success"})
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+})
+
+router.post('/review', validateToken, async (req, res) => {
+    const data = req.body
+
+    await users.updateOne(
+        { username : req.user },
+        {
+            $push : {
+                outgoingReviews : {
+                    name : data.projectName,
+                    reviewer : data.reviewer,
+                    description : data.reviewDesc,
+                    feedBack : ''
+                }
+            }
+        }
+    ).then(() => {
+        users.updateOne(
+            { username : data.reviewer },
+            {
+                $push : {
+                    incomingReviews : {
+                        name : data.projectName,
+                        from : req.user,
+                        desc : data.reviewDesc,
+                        feedBack : ''
+                    }
+                }
+            }
+        ).then(() => {
+            return res.json({success : "review sent"})
+        }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+        })
     }).catch(err => {
         console.log(err);
         return res.json({projectError: "could not complete operation"})
