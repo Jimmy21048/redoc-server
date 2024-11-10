@@ -431,7 +431,7 @@ router.post('/review', validateToken, async (req, res) => {
     await users.updateOne(
         { username : req.user },
         {
-            $push : {
+            $addToSet : {
                 outgoingReviews : {
                     name : data.projectName,
                     reviewer : data.reviewer,
@@ -444,7 +444,7 @@ router.post('/review', validateToken, async (req, res) => {
         users.updateOne(
             { username : data.reviewer },
             {
-                $push : {
+                $addToSet : {
                     incomingReviews : {
                         name : data.projectName,
                         from : req.user,
@@ -463,5 +463,55 @@ router.post('/review', validateToken, async (req, res) => {
         console.log(err);
         return res.json({projectError: "could not complete operation"})
     })
+})
+router.post('/reviewItem', validateToken, (req, res) => {
+    const data = req.body
+
+    users.aggregate([
+        { $unwind : "$projects" },
+        { $match : { "projects.projectName" : data.name } },
+        { $project : { "projects.notes" : 1, "_id" : 0, "username" : 1 } }
+    ]).toArray().then((result) => {
+        return res.json(result)
+    }).catch(err => {
+        console.log(err)
+        return res.json({projectError: "could not complete operation"})
+    })
+})
+
+router.post('/reviewFeedBack', validateToken, async (req, res) => {
+    const data = req.body
+
+    await users.updateOne(
+        { username : req.user, "incomingReviews.name" : data.name },
+        {
+            $set : {
+                "incomingReviews.$[review].feedBack" : data.feedback
+            }
+        },
+        {
+            arrayFilters : [ { "review.name" : data.name } ]
+        }
+    ).then(() => {
+        users.updateOne(
+            { username : data.from , "outgoingReviews.reviewer" : req.user},
+            {
+                $set : {
+                    "outgoingReviews.$[review].feedBack" : data.feedback
+                }
+            }, {
+                arrayFilters : [{ "review.reviewer" : req.user }]
+            }
+        ).then(() => {
+            return res.json({success : "review updated"})
+        }).catch(err => {
+            console.log(err);
+            return res.json({projectError: "could not complete operation"})
+        })
+    }).catch(err => {
+        console.log(err);
+        return res.json({projectError: "could not complete operation"})
+    })
+
 })
 module.exports = router;
