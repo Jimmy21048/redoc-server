@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
         users.aggregate([
             { $unwind : "$randomNotes" },
             { $match : { "randomNotes.notesType" : "public" } },
-            { $project : { "randomNotes.notesTitle" : 1, "randomNotes.notesContent" : 1, "username" : 1, "randomNotes.notesDate" : 1, "randomNotes.notesType": 1, "randomNotes.comments" : 1 } }
+            { $project : { "randomNotes.notesTitle" : 1, "randomNotes.notesContent" : 1, "username" : 1, "randomNotes.catchPhrase" : 1, "randomNotes.notesDate" : 1, "randomNotes.notesType": 1, "randomNotes.comments" : 1 } }
         ]).toArray()
         .then((randomNotes) => {
             return res.json({notes : notes, randomNotes: randomNotes});
