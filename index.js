@@ -6,17 +6,16 @@ const cors = require('cors');
 
 app.use(express.json());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({limit: '50mb', extended: true}));
+app.use(express.urlencoded({extended: true}));
 
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONT_END,
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "accessToken"]
 }))
 
 
-const uri = 'mongodb://localhost:27017/'
-const client = new MongoClient(uri)
+const client = new MongoClient(process.env.MONGO_URI)
 
 const authRouter = require('./routes/signup');
 app.use('/sign', authRouter);
@@ -29,8 +28,8 @@ app.use('/socials', socialsRouter);
 
 client.connect()
 .then(() => {
-    console.log("Connection succesful");
-    app.listen(process.env.SERVER_PORT || 3001, (err) => {
+    console.log("Connection successful");
+    app.listen(process.env.SERVER_PORT || 3000, (err) => {
         if(err) {
             return console.log(err);
         }

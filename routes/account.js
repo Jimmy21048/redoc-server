@@ -15,7 +15,6 @@ router.get('/myaccount', validateToken, async (req, res) => {
             { $project : { "username" : 1, "_id" : 0 } }
         ]).toArray().then(peers => {
             return res.json({result, peers});
-            // return res.json(result);
         }).catch(err => {
             console.log(err);
             return res.json({err: "could not complete operation"});
@@ -198,7 +197,6 @@ router.post('/updatenotes', validateToken, async (req, res) => {
                 { "note.notesTitle" :  data.notes}
             ]
         }).then(() => {
-            console.log("success");
             return res.json({success : "note updated"})
         }).catch(err => {
             console.log(err);
@@ -247,7 +245,7 @@ router.post('/peerRequest', validateToken, async (req, res) => {
                     }
                 }
             ).then(() => {
-                return res.json({succes: "request sent"})
+                return res.json({success: "request sent"})
             }).catch(err => {
                 console.log(err);
                 return res.json({projectError: "could not complete operation"})

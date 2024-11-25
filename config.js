@@ -1,9 +1,8 @@
 const { MongoClient } = require('mongodb');
-const uri = 'mongodb://localhost:27017/'
-const database = 'redoc'
+require('dotenv').config
 
-const client = new MongoClient(uri)
+const client = new MongoClient(process.env.MONGO_URI)
 
-const db = client.db(database);
+const db = client.db(process.env.DB);
 
 module.exports = db
