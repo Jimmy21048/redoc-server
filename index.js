@@ -14,7 +14,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "accessToken"]
 }))
 
-
+console.log(process.env.MONGO_URI)
 const client = new MongoClient(process.env.MONGO_URI)
 
 const authRouter = require('./routes/signup');
