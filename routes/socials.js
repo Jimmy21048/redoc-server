@@ -3,30 +3,48 @@ const router = express.Router()
 const db = require('../config')
 const { validateToken } = require('../middleware/Auth')
 const users = db.collection("users")
+const { redisClient } = require('../redis.config')
 
-router.get('/', async (req, res) => {
-    
-    await users.aggregate([
-        { $unwind : "$projects" },
-        { $match : { "projects.projectType" : "public" } },
-        { $project : { "projects.notes" : 1, "username" : 1, "_id" : 0, "projects.projectName" : 1 } }
-    ]).toArray()
-    .then((notes) => {
-        users.aggregate([
+const getNotes = async () => {
+    try {
+        let notes = await users.aggregate([
+            { $unwind : "$projects" },
+            { $match : { "projects.projectType" : "public" } },
+            { $project : { "projects.notes" : 1, "username" : 1, "_id" : 0, "projects.projectName" : 1 } }
+        ]).toArray()
+
+        let randomNotes = await users.aggregate([
             { $unwind : "$randomNotes" },
             { $match : { "randomNotes.notesType" : "public" } },
             { $project : { "randomNotes.notesTitle" : 1, "randomNotes.notesContent" : 1, "username" : 1, "randomNotes.catchPhrase" : 1, "randomNotes.notesDate" : 1, "randomNotes.notesType": 1, "randomNotes.comments" : 1 } }
         ]).toArray()
-        .then((randomNotes) => {
-            return res.json({notes : notes, randomNotes: randomNotes});
-        }).catch(err => {
-            console.log(err)
-            return res.json("Could not complete operation")
-        })
-    }).catch(err => {
+
+        redisClient.set("socials", JSON.stringify({notes, randomNotes}))
+        return {notes, randomNotes}
+    } catch(err) {
+        console.log(err)
+        return null
+    }
+}
+
+router.get('/', async (req, res) => {
+    try {
+        const cacheResults = await redisClient.get("socials")
+        
+        if(cacheResults) {
+            
+            res.json(JSON.parse(cacheResults))
+            getNotes()
+            return
+        } 
+
+        const results = await getNotes()
+        return res.json(results)
+    }catch(err) {
         console.log(err)
         return res.json("Could not complete operation")
-    })
+    }
+
 
 
 })
@@ -34,8 +52,6 @@ router.get('/', async (req, res) => {
 router.post('/comment', validateToken, async (req, res) => {
     const data = req.body
     data.user = req.user
-
-    console.log(data)
 
     if(data.projectName) {
         await users.updateOne({ "projects.projectName" : data.projectName, "username": data.username }, {

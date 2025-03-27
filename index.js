@@ -5,7 +5,7 @@ require('dotenv').config();
 const cors = require('cors');
 
 app.use(express.json());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({extended: true}));
 
 app.use(cors({
@@ -14,7 +14,6 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "accessToken"]
 }))
 
-console.log(process.env.MONGO_URI)
 const client = new MongoClient(process.env.MONGO_URI)
 
 const authRouter = require('./routes/signup');
