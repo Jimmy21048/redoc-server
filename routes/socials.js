@@ -22,22 +22,27 @@ const getNotes = async () => {
         redisClient.set("socials", JSON.stringify({notes, randomNotes}))
         return {notes, randomNotes}
     } catch(err) {
-        console.log(err)
+        console.log("Redis Error 2 " + err)
         return null
     }
 }
 
 router.get('/', async (req, res) => {
     try {
-        const cacheResults = await redisClient.get("socials")
-        
-        if(cacheResults) {
+        try {
+            const cacheResults = await redisClient.get("socials")
+            if(cacheResults) {
             
-            res.json(JSON.parse(cacheResults))
-            getNotes()
+                res.json(JSON.parse(cacheResults))
+                getNotes()
+                return
+            } 
+        } catch(err) {
+            console.log("Redis error "+ err)
             return
-        } 
-
+        }
+        
+        
         const results = await getNotes()
         return res.json(results)
     }catch(err) {
@@ -103,4 +108,4 @@ router.post('/comment', validateToken, async (req, res) => {
 
 })
 
-module.exports = router
+module.exports = {router, getNotes }

@@ -23,7 +23,7 @@ const accRouter = require('./routes/account');
 app.use('/account', accRouter);
 
 const socialsRouter = require('./routes/socials');
-app.use('/socials', socialsRouter);
+app.use('/socials', socialsRouter.router);
 
 client.connect()
 .then(() => {
