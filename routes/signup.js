@@ -1,25 +1,26 @@
 const express = require("express");
-const db = require('../config');
+const db = require('../config/db.config');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const { sign } = require('jsonwebtoken');
 const { validateToken } = require("../middleware/Auth");
+const validator = require('validator')
 require('dotenv').config();
 
 const users = db.collection("users");
 
 router.post('/signup', async (req, res) => {
-    let data = req.body;
+    let { username, email, password } = req.body;
 
-    const currentUsers = await users.find({ username: data.username }).toArray();
+    const currentUsers = await users.find({ username: username }).toArray();
     if(currentUsers.length !== 0) {
         return res.json({error: "Oops! username already exists"})
     }
 
-    const hashedPwd = await bcrypt.hash(data.password, 10);
+    const hashedPwd = await bcrypt.hash(password, 10);
     data = {...data, password: hashedPwd};
 
-    users.insertOne({ username: data.username, email: data.email, password: data.password })
+    users.insertOne({ username: username, email: email, password: password })
     .then(() => {
         return res.json({success: "user successfully registered, Login"});
     }).catch(err => {
