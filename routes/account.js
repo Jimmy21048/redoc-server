@@ -2,7 +2,6 @@ const express = require('express');
 const { validateToken } = require('../middleware/Auth');
 const router = express.Router();
 const db = require('../config/db');
-// const { redisClient } = require('../redis.config')
 const { getNotes } = require('./socials')
 
 const users = db.collection("users");

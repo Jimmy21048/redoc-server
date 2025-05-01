@@ -3,6 +3,7 @@ const app = express();
 const { MongoClient } = require('mongodb');
 require('dotenv').config();
 const cors = require('cors');
+const mongooseConnection = require('./config/mongoose')
 const { FRONT_END, MONGO_URI, SERVER_PORT } = process.env
 
 app.use(express.json());
@@ -16,6 +17,18 @@ app.use(cors({
 }))
 
 const client = new MongoClient(MONGO_URI)
+
+async function checkDb() {
+    const dbStatus = await mongooseConnection()
+    
+    // if(dbStatus.error) {
+    //     app.use('*', (req, res) => {
+    //         return res.status(500).json({dbStatus})
+    //     })
+    // }
+}
+checkDb()
+
 
 const authRouter = require('./routes/signup');
 app.use('/sign', authRouter);
