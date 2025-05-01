@@ -1,9 +1,9 @@
 const express = require('express')
 const router = express.Router()
-const db = require('../config/db.config')
+const db = require('../config/db')
 const { validateToken } = require('../middleware/Auth')
 const users = db.collection("users")
-const { redisClient } = require('../config/redis.config')
+const { redisClient } = require('../config/redis')
 
 const getNotes = async () => {
     try {
