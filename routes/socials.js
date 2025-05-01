@@ -33,6 +33,7 @@ const getNotes = async () => {
 }
 
 router.get('/', async (req, res) => {
+    logWithTime("Request received")
     try {
         try {
             const cacheResults = await redisClient.get("socials")
