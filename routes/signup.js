@@ -4,7 +4,6 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const { sign } = require('jsonwebtoken');
 const { validateToken } = require("../middleware/Auth");
-const validator = require('validator')
 require('dotenv').config();
 
 const users = db.collection("users");
