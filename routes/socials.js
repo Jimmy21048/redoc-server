@@ -4,54 +4,48 @@ const db = require('../config/db')
 const { validateToken } = require('../middleware/Auth')
 const users = db.collection("users")
 const { redisClient } = require('../config/redis')
+const User = require('../models/User')
 
 const getNotes = async () => {
     try {
-        let notes = await users.aggregate([
+        let notes = await User.aggregate([
             { $unwind : "$projects" },
             { $match : { "projects.projectType" : "public" } },
             { $project : { "projects.notes" : 1, "username" : 1, "_id" : 0, "projects.projectName" : 1 } }
-        ]).toArray()
+        ])
 
-        let randomNotes = await users.aggregate([
+        let randomNotes = await User.aggregate([
             { $unwind : "$randomNotes" },
             { $match : { "randomNotes.notesType" : "public" } },
             { $project : { "randomNotes.notesTitle" : 1, "randomNotes.notesContent" : 1, "username" : 1, "randomNotes.catchPhrase" : 1, "randomNotes.notesDate" : 1, "randomNotes.notesType": 1, "randomNotes.comments" : 1 } }
-        ]).toArray()
+        ])
 
         redisClient.set("socials", JSON.stringify({notes, randomNotes}))
         return {notes, randomNotes}
     } catch(err) {
-        console.log("Redis Error 2 " + err)
-        return null
+        console.log("error: " + err)
+        return { error: "Error fetching data" }
     }
 }
 
 router.get('/', async (req, res) => {
     try {
-        try {
-            const cacheResults = await redisClient.get("socials")
-            if(cacheResults) {
-            
-                res.json(JSON.parse(cacheResults))
-                getNotes()
-                return
-            } 
-        } catch(err) {
-            console.log("Redis error "+ err)
+        const cacheResults = await redisClient.get("socials")
+        if(cacheResults) {
+            res.status(200).json(JSON.parse(cacheResults))
+            getNotes()
             return
-        }
-        
+        } 
         
         const results = await getNotes()
-        return res.json(results)
+        if(results.error) {
+            return res.status(500).json(results)
+        }
+        return res.status(200).json(results)
     }catch(err) {
-        console.log(err)
-        return res.json("Could not complete operation")
+        console.log("Error fetching notes ", err)
+        return res.status(500).json("Error fetching data")
     }
-
-
-
 })
 
 router.post('/comment', validateToken, async (req, res) => {

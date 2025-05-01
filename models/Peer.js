@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 
 const peerSchema = new mongoose.Schema({
-    requestedPeers: [String],
-    pendingPeers: [String]
+    requestedPeers: [{ type: String }],
+    pendingPeers: [{ type: String }]
 })
 
 module.exports = mongoose.model('Peer', peerSchema)

@@ -2,10 +2,11 @@ const mongoose = require('mongoose')
 const noteSchema = require('./Note')
 
 const projectSchema = new mongoose.Schema({
-    projectName: String,
-    projectType: String,
-    projectField: String,
-    notes: [noteSchema]
-})
+    projectName: { type: String },
+    projectType: { type: String },
+    projectField: { type: String },
+    notes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'noteSchema' }]
+}, { timestamps: true })
 
-module.exports = mongoose.model('Project', projectSchema)
+const Project = mongoose.model('Project', projectSchema)
+module.exports = Project

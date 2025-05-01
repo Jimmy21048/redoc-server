@@ -1,11 +1,11 @@
 const mongoose = require('mongoose')
 
 const noteSchema = new mongoose.Schema({
-    notesTitle: String,
-    notesType: String,
-    catchPhrase: String,
-    notesContent: [[String]],
-    notesDate: String 
+    notesTitle: { type: String },
+    notesType: { type: String },
+    catchPhrase: { type: String },
+    notesContent: [[{ type: String }]],
+    notesDate: { type: String } 
 })
 
 module.exports = mongoose.model('Note', noteSchema)

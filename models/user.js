@@ -4,12 +4,12 @@ const noteSchema = require('./Note')
 const peerSchema = require('./Peer')
 
 const userSchema = new mongoose.Schema({
-    username: String,
-    email: String,
-    password: String,
-    projects: [projectSchema],
-    randomNotes: [noteSchema],
-    peers: [peerSchema],
-})
+    username: { type: String, unique: true},
+    email: { type: String, },
+    password: { type: String, required: true},
+    projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'projectSchema' }],
+    randomNotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'noteSchema' }],
+    peers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'peerSchema' }],
+}, { timestamps: true })
 
 module.exports = mongoose.model('User', userSchema)

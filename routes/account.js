@@ -5,6 +5,8 @@ const db = require('../config/db');
 const { getNotes } = require('./socials')
 
 const users = db.collection("users");
+const Project = require('../models/Project')
+const User = require('../models/User')
 
 router.get('/myaccount', validateToken, async (req, res) => {
     const user = req.user;
@@ -28,50 +30,63 @@ router.get('/myaccount', validateToken, async (req, res) => {
 })
 
 router.post('/newproject', validateToken, async (req, res) => {
-    const user = req.user;
+    const username = req.user;
     const data = req.body;
 
-    await users.find({ username: user,  projects: { $exists: true} }).toArray()
-    .then((result => {
-        if(result.length === 0) {
-            users.updateOne({ username: user }, { $set : { projects: [{ 
-                projectName: data.projectName,
-                projectType: data.projectType,
-                projectField: data.projectField
-             }] } }).then( async () => {
-                await users.findOne({ username: user })
-                .then((result) => {
-                    return res.json({success: "project created", projects: result.projects})
-                })
-             }).catch(err => {
-                console.log(err);
-                return res.json({projectError: "could not complete operation"})
-             })
-        } else {
-            for(let i = 0; i < result[0].projects.length; i++) {
-                if(result[0].projects[i].projectName === data.projectName) {
-                    return res.json({projectError: "Oops! Project name already exists"})
-                }
-            }
+    const user = await User.findOne({ username: username })
+    console.log(user)
+
+    const project = await Project.create({
+        projectName: data.projectName,
+        projectType: data.projectType,
+        projectField: data.projectField
+    })
+
+    user.projects.push(project._id)
+    await user.save()
+
+
+    // await User.find({ username: user,  projects: { $exists: true} })
+    // .then((result => {
+    //     if(result.length === 0) {
+    //         User.updateOne({ username: user }, { $set : { projects: [{ 
+    //             projectName: data.projectName,
+    //             projectType: data.projectType,
+    //             projectField: data.projectField
+    //          }] } }).then( async () => {
+    //             await User.findOne({ username: user })
+    //             .then((result) => {
+    //                 return res.json({success: "project created", projects: result.projects})
+    //             })
+    //          }).catch(err => {
+    //             console.log(err);
+    //             return res.json({projectError: "could not complete operation"})
+    //          })
+    //     } else {
+    //         for(let i = 0; i < result[0].projects.length; i++) {
+    //             if(result[0].projects[i].projectName === data.projectName) {
+    //                 return res.json({projectError: "Oops! Project name already exists"})
+    //             }
+    //         }
             
-            users.updateOne({ username: user }, { $push : { projects : {
-                projectName: data.projectName,
-                projectType: data.projectType,
-                projectField: data.projectField
-            } } }).then( async() => {
-                await users.findOne({ username: user })
-                .then((result) => {
-                    return res.json({success: "project created", projects: result.projects})
-                })
+    //         User.updateOne({ username: user }, { $push : { projects : {
+    //             projectName: data.projectName,
+    //             projectType: data.projectType,
+    //             projectField: data.projectField
+    //         } } }).then( async() => {
+    //             await User.findOne({ username: user })
+    //             .then((result) => {
+    //                 return res.json({success: "project created", projects: result.projects})
+    //             })
                 
-             }).catch(err => {
-                console.log(err);
-                return res.json({projectError: "could not complete operation"})
-             })
-        }
+    //          }).catch(err => {
+    //             console.log(err);
+    //             return res.json({projectError: "could not complete operation"})
+    //          })
+    //     }
 
 
-    }))
+    // }))
 
     
 
