@@ -1,5 +1,5 @@
 const express = require("express");
-const db = require('../config/db.config');
+const db = require('../config/db');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const { sign } = require('jsonwebtoken');
