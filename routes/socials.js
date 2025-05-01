@@ -5,6 +5,10 @@ const { validateToken } = require('../middleware/Auth')
 const users = db.collection("users")
 const { redisClient } = require('../config/redis')
 
+function logWithTime(message) {
+    console.log(`[${new Date().toISOString()}] ${message}`);
+}
+
 const getNotes = async () => {
     try {
         let notes = await users.aggregate([
@@ -20,6 +24,7 @@ const getNotes = async () => {
         ]).toArray()
 
         redisClient.set("socials", JSON.stringify({notes, randomNotes}))
+        logWithTime("From db")
         return {notes, randomNotes}
     } catch(err) {
         console.log("Redis Error 2 " + err)
@@ -32,7 +37,7 @@ router.get('/', async (req, res) => {
         try {
             const cacheResults = await redisClient.get("socials")
             if(cacheResults) {
-            
+                logWithTime("From cache")
                 res.json(JSON.parse(cacheResults))
                 getNotes()
                 return
