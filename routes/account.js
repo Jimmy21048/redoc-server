@@ -9,24 +9,24 @@ const Project = require('../models/Project')
 const User = require('../models/user')
 
 router.get('/myaccount', validateToken, async (req, res) => {
-    const user = req.user;
+    const username = req.user;
 
-    await users.findOne({ username: user })
-    .then(result => {
-        users.aggregate([
-            { $match : { "username" : { $exists : true } } },
-            { $project : { "username" : 1, "_id" : 0 } }
-        ]).toArray().then(peers => {
-            return res.json({result, peers});
-        }).catch(err => {
-            console.log(err);
-            return res.json({err: "could not complete operation"});
-        })
-        
-    }).catch(err => {
-        console.log(err);
-        return res.json({err: "could not complete operation"});
-    })
+    try {
+        const user = await User.findOne({ username: username })
+
+        if(user) {
+            const projects = user.projects
+            const peers = user.peers
+            const randomNotes = user.randomNotes
+
+            const otherUsers = await User.find({}, { username: 1, _id : 0 })
+
+            return res.status(200).json({success: "Fetch success", projects: projects, peers: peers, randomNotes: randomNotes, users: otherUsers})
+        }
+    }catch(error) {
+        console.log("Failed to fetch: ", error)
+        return res.status(500).json({error: "Error fetching details"})
+    }
 })
 
 router.post('/newproject', validateToken, async (req, res) => {
