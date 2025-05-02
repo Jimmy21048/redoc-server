@@ -4,7 +4,7 @@ const db = require('../config/db')
 const { validateToken } = require('../middleware/Auth')
 const users = db.collection("users")
 const { redisClient } = require('../config/redis')
-const User = require('../models/User')
+const User = require('../models/user')
 
 const getNotes = async () => {
     try {

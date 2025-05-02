@@ -12,4 +12,5 @@ const userSchema = new mongoose.Schema({
     peers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'peerSchema' }],
 }, { timestamps: true })
 
-module.exports = mongoose.model('User', userSchema)
+const User = mongoose.model('User', userSchema)
+module.exports = User

@@ -6,7 +6,7 @@ const { getNotes } = require('./socials')
 
 const users = db.collection("users");
 const Project = require('../models/Project')
-const User = require('../models/User')
+const User = require('../models/user')
 
 router.get('/myaccount', validateToken, async (req, res) => {
     const user = req.user;
