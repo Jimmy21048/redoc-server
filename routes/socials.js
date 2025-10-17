@@ -3,7 +3,7 @@ const router = express.Router()
 const db = require('../config/db')
 const { validateToken } = require('../middleware/Auth')
 const users = db.collection("users")
-const { redisClient } = require('../config/redis')
+// const { redisClient } = require('../config/redis')
 
 // function logWithTime(message) {
 //     console.log(`[${new Date().toISOString()}] ${message}`);
@@ -23,7 +23,7 @@ const getNotes = async () => {
             { $project : { "randomNotes.notesTitle" : 1, "randomNotes.notesContent" : 1, "username" : 1, "randomNotes.catchPhrase" : 1, "randomNotes.notesDate" : 1, "randomNotes.notesType": 1, "randomNotes.comments" : 1 } }
         ]).toArray()
 
-        redisClient.set("socials", JSON.stringify({notes, randomNotes}))
+        // redisClient.set("socials", JSON.stringify({notes, randomNotes}))
         return {notes, randomNotes}
     } catch(err) {
         console.log("Redis Error 2 " + err)
@@ -33,17 +33,17 @@ const getNotes = async () => {
 
 router.get('/', async (req, res) => {
     try {
-        try {
-            const cacheResults = await redisClient.get("socials")
-            if(cacheResults) {
-                res.json(JSON.parse(cacheResults))
-                getNotes()
-                return
-            } 
-        } catch(err) {
-            console.log("Redis error "+ err)
-            return
-        }
+        // try {
+        //     const cacheResults = await redisClient.get("socials")
+        //     if(cacheResults) {
+        //         res.json(JSON.parse(cacheResults))
+        //         getNotes()
+        //         return
+        //     } 
+        // } catch(err) {
+        //     console.log("Redis error "+ err)
+        //     return
+        // }
         
         
         const results = await getNotes()
